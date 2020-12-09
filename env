@@ -1,0 +1,34 @@
+#!/bin/bash
+
+HERE=$(dirname $0)
+SIDDHISDK_NAME=siddhi-sdk-5.1.2
+PYTHON_PROXY_JAR_NAME=siddhi-python-api-proxy-5.1.0.jar
+
+if [ -z "$JAVA_HOME" ]; then
+    if [ $(uname) = "Darwin" ]; then
+        export JAVA_HOME=$(/usr/libexec/java_home -v13)
+    else
+        echo "JAVA_HOME is not set, and this script does not set it for Linux, please implement"
+    fi
+    if [ ! -d "$JAVA" ]; then
+        echo "JAVA_HOME not found: $JAVA"
+        return 2
+    fi
+fi
+
+if [ $(uname) = "Darwin" ]; then
+    export SIDDHISDK_HOME=$(realpath $HERE/$SIDDHISDK_NAME)
+else
+    export SIDDHISDK_HOME=$(readlink -f $HERE/$SIDDHISDK_NAME)
+fi
+if [ ! -d "$SIDDHISDK_HOME" ]; then
+    echo "No such directory: $SIDDHISDK_HOME"
+    return 2
+fi
+PYTHON_PROXY_JAR=$SIDDHISDK_HOME/lib/$PYTHON_PROXY_JAR_NAME
+if [ ! -e "$PYTHON_PROXY_JAR" ]; then
+    echo "Proxy jar not found: $PYTHON_PROXY_JAR"
+    return 2
+fi
+
+return 0

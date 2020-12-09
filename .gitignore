@@ -1,0 +1,4 @@
+siddhi-sdk-*
+**/__pycache__
+**/*.egg-info
+.python-version
