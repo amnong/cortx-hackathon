@@ -3,3 +3,4 @@ siddhi-sdk-*
 **/*.egg-info
 .python-version
 venv
+**/*.swp
