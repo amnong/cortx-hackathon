@@ -1,5 +1,7 @@
 import logging
-from time import sleep
+import time
+
+from colorama import Fore, Style
 
 from PySiddhi.DataTypes.LongType import LongType
 from PySiddhi.core.SiddhiManager import SiddhiManager
@@ -19,12 +21,12 @@ QUERY_NAME = "cortxEventQuery"
 SIDDHI_APP = """\
 define stream {stream} (
     event_code string,
-    bucket string
+    logfile string
 );
 
 @info(name = '{query}')
-from {stream}
-select event_code,bucket
+from {stream}#window.lengthBatch(5)
+select event_code,logfile
 insert into outputStream;
 """.format(stream=INPUT_STREAM_NAME, query=QUERY_NAME)
 #from {stream}[volume < 150]
@@ -40,7 +42,16 @@ def run(args):
     # Add listener to capture output events
     class QueryCallbackImpl(QueryCallback):
         def receive(self, timestamp, inEvents, outEvents):
-            PrintEvent(timestamp, inEvents, outEvents)
+            # Ignore expired events for now (outEvents)
+            #logger.info('### CALLBACK START ###')
+            #PrintEvent(timestamp, inEvents, outEvents)
+
+            log_filenames = [event.getData(1) for event in inEvents]
+            logger.info('%sCompressing log file %s%s%s', Fore.WHITE, Fore.GREEN, ', '.join(log_filenames), Style.RESET_ALL)
+            #for event in inEvents:
+
+            #    log_filename = event.getData(1)
+            #    logger.info('%sCompressing log file %s%s%s', Fore.WHITE, Fore.GREEN, log_filename, Style.RESET_ALL)
 
     runtime.addCallback(QUERY_NAME, QueryCallbackImpl())
 
@@ -52,7 +63,10 @@ def run(args):
     runtime.start()
 
     try:
-        monitor_buckets(input_handler)
+        #monitor_buckets(input_handler)
+        dummy_log_events(input_handler)
+        logger.info('Waiting for any residual events')
+        time.sleep(10)
     except Exception as e:  # pylint: disable=broad-except
         logger.error('UNEXPECTED ERROR: %s', e)
         raise
@@ -60,6 +74,17 @@ def run(args):
         logger.info('Shutting down...')
         siddhi_manager.shutdown()
         logger.info('Goodbye')
+
+
+def dummy_log_events(input_handler):
+    # Sending events to Siddhi
+    logger.info('Sending events')
+    for n in range(1, 31):
+        event_data = ["LOG_CREATED", "foo.log.%d" % n]
+        logger.info('Sending event %s', event_data)
+        input_handler.send(event_data)
+        if n % 3 == 0:
+            time.sleep(5)
 
 
 def integrate(input_handler):
@@ -73,4 +98,4 @@ def integrate(input_handler):
 
     # Wait for response
     logger.info('Waiting...')
-    sleep(2)
+    time.sleep(2)

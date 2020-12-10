@@ -1,8 +1,8 @@
 import datetime
 import boto3
 
-import app
-import config
+from .. import app
+from .. import config
 
 @app.app.task
 def log_test(log_line):

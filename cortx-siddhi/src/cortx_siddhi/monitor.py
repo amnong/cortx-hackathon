@@ -29,12 +29,11 @@ def monitor_buckets(siddhi_input_handler):
 
         if buckets is not None:
             created_buckets, deleted_buckets = compare_buckets(previous_buckets, buckets)
-            if len(created_buckets) > 0: 
-                print(created_buckets)
-                siddhi_input_handler.send([1, True, "something"])
+            for bucket in created_buckets:
+                siddhi_input_handler.send(['BUCKET_CREATED', bucket[0]])
 
-            if len(deleted_buckets) > 0:
-                print(deleted_buckets)
+            for bucket in deleted_buckets:
+                siddhi_input_handler.send(['BUCKET_DELETED', bucket[0]])
 
             previous_buckets = buckets
 
