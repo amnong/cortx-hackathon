@@ -14,33 +14,29 @@ from .monitor import S3Monitor
 logger = logging.getLogger(__name__)
 
 
-LOG_INPUT_STREAM_NAME = "cortxEventStream"
+INPUT_STREAM_NAME = "cortxEventStream"
+#LOG_INPUT_STREAM_NAME = "cortxEventStream"
 LOG_QUERY_NAME = "cortxEventQuery"
 
-BUCKET_INPUT_STREAM_NAME = "cortxBucketStream"
+#BUCKET_INPUT_STREAM_NAME = "cortxBucketStream"
 BUCKET_QUERY_NAME = "cortxBucketQuery"
 # Siddhi Query to filter events with volume less than 150 as output
 SIDDHI_APP = """\
-define stream {log_stream} (
+define stream {stream} (
     event_code string,
-    logfile string
+    object_name string
 );
 
 @info(name = '{log_query}')
-from {log_stream}#window.lengthBatch(5)
-select event_code,logfile
+from {stream}[event_code == "LOG_CREATED" or event_code == "LOG_DELETED"]#window.lengthBatch(5)
+select event_code,object_name
 insert into outputStream;
-
-define stream {bucket_stream} (
-    event_code string,
-    bucket string
-);
 
 @info(name = '{bucket_query}')
-from {bucket_stream}#window.timeBatch(10 sec)
-select event_code,bucket
+from {stream}[event_code == "BUCKET_CREATED" or event_code == "BUCKET_DELETED"]#window.timeBatch(10 sec)
+select event_code,object_name
 insert into outputStream;
-""".format(log_stream=LOG_INPUT_STREAM_NAME, log_query=LOG_QUERY_NAME, bucket_stream=BUCKET_INPUT_STREAM_NAME, bucket_query=BUCKET_QUERY_NAME)
+""".format(stream=INPUT_STREAM_NAME, log_query=LOG_QUERY_NAME, bucket_query=BUCKET_QUERY_NAME)
 #from {stream}[volume < 150]
 
 
@@ -65,10 +61,11 @@ def run(args):
             logger.info('%sCompressing log file %s%s%s', Fore.WHITE, Fore.GREEN, ', '.join(log_filenames), Style.RESET_ALL)
 
 
+    runtime.addCallback(LOG_QUERY_NAME, LogQueryCallbackImpl())
     runtime.addCallback(BUCKET_QUERY_NAME, BucketQueryCallbackImpl())
 
     # Retrieving input handler to push events into Siddhi
-    input_handler = runtime.getInputHandler(BUCKET_INPUT_STREAM_NAME)
+    input_handler = runtime.getInputHandler(INPUT_STREAM_NAME)
 
     # Starting event processing
     logger.info('Starting runtime...')
