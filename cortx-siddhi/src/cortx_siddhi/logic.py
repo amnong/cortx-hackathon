@@ -14,21 +14,33 @@ from .monitor import monitor_buckets
 logger = logging.getLogger(__name__)
 
 
-INPUT_STREAM_NAME = "cortxEventStream"
-QUERY_NAME = "cortxEventQuery"
+LOG_INPUT_STREAM_NAME = "cortxEventStream"
+LOG_QUERY_NAME = "cortxEventQuery"
 
+BUCKET_INPUT_STREAM_NAME = "cortxBucketStream"
+BUCKET_QUERY_NAME = "cortxBucketQuery"
 # Siddhi Query to filter events with volume less than 150 as output
 SIDDHI_APP = """\
-define stream {stream} (
+define stream {log_stream} (
     event_code string,
     logfile string
 );
 
-@info(name = '{query}')
-from {stream}#window.lengthBatch(5)
+@info(name = '{log_query}')
+from {log_stream}#window.lengthBatch(5)
 select event_code,logfile
 insert into outputStream;
-""".format(stream=INPUT_STREAM_NAME, query=QUERY_NAME)
+
+define stream {bucket_stream} (
+    event_code string,
+    bucket string
+);
+
+@info(name = '{bucket_query}')
+from {bucket_stream}#window.timeBatch(10 sec)
+select event_code,bucket
+insert into outputStream;
+""".format(log_stream=LOG_INPUT_STREAM_NAME, log_query=LOG_QUERY_NAME, bucket_stream=BUCKET_INPUT_STREAM_NAME, bucket_query=BUCKET_QUERY_NAME)
 #from {stream}[volume < 150]
 
 
@@ -40,31 +52,31 @@ def run(args):
     logger.info('Runtime up...')
 
     # Add listener to capture output events
-    class QueryCallbackImpl(QueryCallback):
+    class LogQueryCallbackImpl(QueryCallback):
         def receive(self, timestamp, inEvents, outEvents):
-            # Ignore expired events for now (outEvents)
-            #logger.info('### CALLBACK START ###')
             #PrintEvent(timestamp, inEvents, outEvents)
-
             log_filenames = [event.getData(1) for event in inEvents]
             logger.info('%sCompressing log file %s%s%s', Fore.WHITE, Fore.GREEN, ', '.join(log_filenames), Style.RESET_ALL)
-            #for event in inEvents:
 
-            #    log_filename = event.getData(1)
-            #    logger.info('%sCompressing log file %s%s%s', Fore.WHITE, Fore.GREEN, log_filename, Style.RESET_ALL)
+    class BucketQueryCallbackImpl(QueryCallback):
+        def receive(self, timestamp, inEvents, outEvents):
+            #PrintEvent(timestamp, inEvents, outEvents)
+            log_filenames = [event.getData(1) for event in inEvents]
+            logger.info('%sCompressing log file %s%s%s', Fore.WHITE, Fore.GREEN, ', '.join(log_filenames), Style.RESET_ALL)
 
-    runtime.addCallback(QUERY_NAME, QueryCallbackImpl())
+
+    runtime.addCallback(BUCKET_QUERY_NAME, BucketQueryCallbackImpl())
 
     # Retrieving input handler to push events into Siddhi
-    input_handler = runtime.getInputHandler(INPUT_STREAM_NAME)
+    input_handler = runtime.getInputHandler(BUCKET_INPUT_STREAM_NAME)
 
     # Starting event processing
     logger.info('Starting runtime...')
     runtime.start()
 
     try:
-        #monitor_buckets(input_handler)
-        dummy_log_events(input_handler)
+        monitor_buckets(input_handler)
+        # dummy_log_events(input_handler)
         logger.info('Waiting for any residual events')
         time.sleep(10)
     except Exception as e:  # pylint: disable=broad-except
