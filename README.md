@@ -4,5 +4,5 @@ CORTX Hackathon
 Representing [Weka.IO](https://weka.io):
 
 - Gershon Geva
-- Yoni Knobil
+- Yonatan Knobil
 - Amnon Grossman
