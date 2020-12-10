@@ -50,7 +50,7 @@ def run(args):
     runtime.start()
 
     try:
-        integrate(input_handler)
+        celery_entry_point(input_handler)
     except Exception as e:  # pylint: disable=broad-except
         logger.error('UNEXPECTED ERROR: %s', e)
         raise

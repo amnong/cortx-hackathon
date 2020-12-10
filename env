@@ -1,6 +1,6 @@
 #!/bin/bash
-
-HERE=$(dirname $0)
+#HERE=$(dirname $0)
+HERE=$(pwd)
 SIDDHISDK_NAME=siddhi-sdk-5.1.2
 PYTHON_PROXY_JAR_NAME=siddhi-python-api-proxy-5.1.0.jar
 
