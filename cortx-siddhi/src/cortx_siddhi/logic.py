@@ -8,7 +8,7 @@ from PySiddhi.core.SiddhiManager import SiddhiManager
 from PySiddhi.core.query.output.callback.QueryCallback import QueryCallback
 from PySiddhi.core.util.EventPrinter import PrintEvent
 
-from .monitor import monitor_buckets
+from .monitor import S3Monitor
 
 
 logger = logging.getLogger(__name__)
@@ -75,7 +75,8 @@ def run(args):
     runtime.start()
 
     try:
-        monitor_buckets(input_handler)
+        monitor = S3Monitor()
+        monitor.monitor_buckets(input_handler)
         # dummy_log_events(input_handler)
         logger.info('Waiting for any residual events')
         time.sleep(10)
@@ -98,16 +99,3 @@ def dummy_log_events(input_handler):
         if n % 3 == 0:
             time.sleep(5)
 
-
-def integrate(input_handler):
-    # Sending events to Siddhi
-    logger.info('Sending events')
-    input_handler.send(["IBM", 700.0, LongType(100)])
-    input_handler.send(["WSO2", 60.5, LongType(200)])
-    input_handler.send(["GOOG", 50, LongType(30)])
-    input_handler.send(["IBM", 76.6, LongType(400)])
-    input_handler.send(["WSO2", 45.6, LongType(50)])
-
-    # Wait for response
-    logger.info('Waiting...')
-    time.sleep(2)
