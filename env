@@ -2,7 +2,14 @@
 #HERE=$(dirname $0)
 HERE=$(pwd)
 SIDDHISDK_NAME=siddhi-sdk-5.1.2
-PYTHON_PROXY_JAR_NAME=siddhi-python-api-proxy-5.1.0.jar
+SIDDHI_LIB=$SIDDHISDK_HOME/lib
+
+PYTHON_PROXY_JAR=$SIDDHI_LIB/siddhi-python-api-proxy-5.1.0.jar
+PYTHON_PROXY_JAR_URL="https://github.com/siddhi-io/PySiddhi/releases/download/v5.1.0/siddhi-python-api-proxy-5.1.0.jar"
+
+SIDDHI_REGEX_JAR=$SIDDHI_LIB/siddhi-execution-regex-5.0.6.jar
+SIDDHI_REGEX_JAR_URL="https://repo1.maven.org/maven2/io/siddhi/extension/execution/regex/siddhi-execution-regex/5.0.6/siddhi-execution-regex-5.0.6.jar"
+
 CORTX_VENV_DIR=$HERE/venv
 CORTX_SIDDHI_DIR=$HERE/cortx-siddhi
 
@@ -27,9 +34,14 @@ if [ ! -d "$SIDDHISDK_HOME" ]; then
     echo "No such directory: $SIDDHISDK_HOME"
     return 2
 fi
-PYTHON_PROXY_JAR=$SIDDHISDK_HOME/lib/$PYTHON_PROXY_JAR_NAME
 if [ ! -e "$PYTHON_PROXY_JAR" ]; then
-    echo "Proxy jar not found: $PYTHON_PROXY_JAR"
+    echo "Downloading $PYTHON_PROXY_JAR_URL"
+    wget -q -P "$SIDDHI_LIB" "$PYTHON_PROXY_JAR_URL"
+    return 2
+fi
+if [ ! -e "$SIDDHI_REGEX_JAR" ]; then
+    echo "Downloading $SIDDHI_REGEX_JAR_URL"
+    wget -q -P "$SIDDHI_LIB" "$SIDDHI_REGEX_JAR_URL"
     return 2
 fi
 
