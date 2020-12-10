@@ -16,7 +16,7 @@ def get_buckets(client):
     result = set((bucket['Name'], bucket['CreationDate']) for bucket in query_result)
     return result
 
-def celery_entry_point(siddhi_input_handler):
+def monitor_buckets(siddhi_input_handler):
     client = config.get_client()
     previous_buckets = get_buckets(client)
 

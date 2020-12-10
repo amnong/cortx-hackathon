@@ -6,26 +6,28 @@ from PySiddhi.core.SiddhiManager import SiddhiManager
 from PySiddhi.core.query.output.callback.QueryCallback import QueryCallback
 from PySiddhi.core.util.EventPrinter import PrintEvent
 
+from .monitor import monitor_buckets
+
 
 logger = logging.getLogger(__name__)
 
 
-INPUT_STREAM_NAME = "cseEventStream"
-QUERY_NAME = "query1"
+INPUT_STREAM_NAME = "cortxEventStream"
+QUERY_NAME = "cortxEventQuery"
 
 # Siddhi Query to filter events with volume less than 150 as output
 SIDDHI_APP = """\
 define stream {stream} (
-    symbol string,
-    price float,
-    volume long
+    event_code string,
+    bucket string
 );
 
 @info(name = '{query}')
-from {stream}[volume < 150]
-select symbol,price
+from {stream}
+select event_code,bucket
 insert into outputStream;
 """.format(stream=INPUT_STREAM_NAME, query=QUERY_NAME)
+#from {stream}[volume < 150]
 
 
 def run(args):
@@ -50,7 +52,7 @@ def run(args):
     runtime.start()
 
     try:
-        celery_entry_point(input_handler)
+        monitor_buckets(input_handler)
     except Exception as e:  # pylint: disable=broad-except
         logger.error('UNEXPECTED ERROR: %s', e)
         raise
